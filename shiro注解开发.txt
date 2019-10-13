@@ -1,0 +1,42 @@
+shiro提供了一系列的访问控制的注解，可以简化开发过程。
+
+1、添加依赖：
+注解加载Controller中，原理是会对Controller做增强，切入访问控制逻辑，所以需要如下依赖
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aspects</artifactId>
+    <version>4.3.6.RELEASE</version>
+</dependency>
+
+2、配置
+在springMvc配置文件中开启shiro注解
+
+<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+<!--自动代理生成器，等价于aop:config;
+aop:config 或 AutoProxyCreator两者选其一，spring官方提醒千万不要同时使用。-->
+<aop:config/>
+<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+    <property name="securityManager" ref="securityManager"/>
+</bean>
+
+去掉shiroContext中的过滤器链以及结果对应的路径的配置
+
+
+3、注解：
+@RequiresAuthentication //验证用户是否登录，等同于方法subject.isAuthenticated() 结果为true时。用在类上表示类中的所有方法都需要身份验证
+@RequiresRoles(value={"manager","admin"},logical= Logical.OR)//角色验证，用在类中，表示所有方法都需要角色,规则："或"。如果没有这个权限则会抛出异常AuthorizationException。
+@RequiresPermissions({"user:query”,“user:delete"}) //有对应权限，默认是 "且"，
+@RequiresUser //记住我 或 已身份认证
+@RequiresGuest //游客身份
+
+4、异常处理
+自定义异常解析器
+
+注意：注解方式使用shiro会导致登出功能不能使用，需要自己添加Handler
+
+错误：
+类上边注解
+@RequiresAuthentication//类中的所有方法都需要身份验证
+@RequiresRoles(value = {"teacher","admin"},logical = Logical.OR)//类中的所有方法都需要角色，规则："或"
+Not authorized to invoke method: public java.lang.String com.vainglory.controller.UserController.toLogin()
+该方法无权调用
